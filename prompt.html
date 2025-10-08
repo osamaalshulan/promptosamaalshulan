@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OsamaAlshuLanPrompt - محاكاة التصفح</title>
+    <style>
+        /* 1. الإعدادات الأساسية والثوابت */
+        :root {
+            --dark-bg: #1e1e2d;
+            --main-text: #ffffff;
+            --sub-text: #b0b0c0;
+            --pink-accent: #e91e63;
+            --purple-accent: #9c27b0;
+            --gemini-blue: #4285F4;
+            --gemini-green: #34A853;
+            --gemini-yellow: #FBBC05;
+            --gemini-red: #EA4335;
+            --card-bg: #29293a;
+            --header-height: 60px;
+        }
+
+        /* إعادة تعيين بسيطة */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--main-text);
+            line-height: 1.6;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* 2. الهيدر (Header) */
+        .header {
+            height: var(--header-height);
+            background-color: #1a1a25;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 0 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .logo-icon {
+            color: var(--pink-accent);
+            margin-left: 5px;
+            font-size: 24px;
+        }
+
+        /* 3. حاوية المحتوى الرئيسية */
+        .container {
+            padding: 20px 15px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* 4. قسم الترحيب والبحث */
+        .hero-section {
+            background: linear-gradient(135deg, #3a1a47, #1a1a25);
+            padding: 40px 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .hero-icon {
+            color: var(--pink-accent);
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+
+        .hero-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, var(--pink-accent), var(--purple-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            color: var(--sub-text);
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 8px;
+            background-color: #333;
+            color: var(--main-text);
+            font-size: 16px;
+        }
+
+        .search-button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(90deg, var(--pink-accent), var(--purple-accent));
+            color: var(--main-text);
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        /* 5. بطاقة البرومبت والتفاصيل */
+        .prompt-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            position: relative;
+            cursor: pointer; 
+            z-index: 1;
+        }
+
+        .prompt-number {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: var(--main-text);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            z-index: 5; 
+        }
+
+        .prompt-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
+            min-height: 400px; 
+            transition: filter 0.3s ease;
+        }
+
+        /* زر المعاينة كـ Overlay */
+        .view-prompt-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.75); 
+            color: var(--main-text);
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            z-index: 4; 
+            opacity: 0; 
+            transition: opacity 0.3s ease; 
+        }
+
+        /* الحالة النشطة: إظهار الزر عند إضافة الكلاس */
+        .prompt-card.active .view-prompt-btn {
+            opacity: 1;
+        }
+        
+        /* الحالة النشطة: تعتيم الصورة قليلاً عند إضافة الكلاس */
+        .prompt-card.active .prompt-image {
+            filter: brightness(0.7);
+        }
+
+        .view-prompt-btn:hover {
+            background-color: rgba(0, 0, 0, 0.9);
+        }
+
+        .view-prompt-btn i {
+            margin-left: 8px; 
+        }
+        
+        .details-page {
+            display: none;
+        }
+
+        .back-link {
+            display: flex;
+            align-items: center;
+            color: var(--sub-text);
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        
+        .copy-button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(90deg, var(--pink-accent), var(--purple-accent));
+            color: var(--main-text);
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .prompt-text {
+            background-color: #1e1e2d;
+            padding: 15px;
+            border-radius: 8px;
+            color: var(--main-text);
+            white-space: pre-wrap;
+            font-size: 14px;
+            border: 1px solid #444;
+        }
+
+        /* 6. زر جرب على Gemini (Try On Button) */
+        .try-on-btn {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(90deg, var(--gemini-blue), var(--gemini-green), var(--gemini-yellow), var(--gemini-red));
+            color: var(--main-text);
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+            margin-top: 20px; 
+        }
+
+        .try-on-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* 7. أيقونة Gemini الأصلية (CSS) */
+        .gemini-logo {
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            position: relative;
+            margin-left: 10px;
+            transform: rotate(-15deg);
+        }
+
+        .gemini-logo::before,
+        .gemini-logo::after {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            transform: rotate(-45deg);
+        }
+
+        .gemini-logo::before {
+            background: linear-gradient(45deg, var(--gemini-blue) 0%, var(--gemini-red) 100%);
+            left: 0;
+            top: 0;
+            clip-path: polygon(0 0, 100% 0, 100% 50%, 50% 100%, 0 50%);
+            z-index: 2;
+            transform: rotate(15deg);
+        }
+
+        .gemini-logo::after {
+            background: linear-gradient(-45deg, var(--gemini-green) 0%, var(--gemini-yellow) 100%);
+            right: 0;
+            bottom: 0;
+            clip-path: polygon(0 50%, 50% 0, 100% 50%, 100% 100%, 0 100%);
+            z-index: 1;
+            transform: rotate(15deg);
+        }
+
+        /* 8. حاوية أزرار التصفح (Pagination Container) */
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-top: 30px;
+            margin-bottom: 50px;
+            flex-wrap: wrap; 
+        }
+
+        .pagination-btn {
+            flex-grow: 1;
+            width: calc(50% - 7.5px); 
+            padding: 15px 10px; 
+            border-radius: 12px;
+            font-size: 16px; 
+            font-weight: bold;
+            color: var(--main-text);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            transition: opacity 0.3s;
+            text-align: center; 
+            display: flex; 
+            flex-direction: row; 
+            align-items: center; 
+            justify-content: center; 
+            white-space: nowrap; 
+        }
+
+        .pagination-btn:hover {
+            opacity: 0.9;
+        }
+
+        .pagination-btn i {
+            font-size: 18px; 
+            margin: 0 5px; 
+        }
+
+        .prev-btn {
+            background: #555; 
+            display: none; 
+        }
+        
+        .next-btn {
+            background: linear-gradient(90deg, var(--pink-accent), var(--purple-accent)); 
+        }
+
+        /* مؤشر التحميل */
+        .loading-spinner {
+            display: none;
+            margin: 20px auto;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid var(--pink-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body id="app-body">
+
+    <header class="header">
+        <a href="#" class="logo" onclick="showPage('home')">
+            <span class="logo-icon"><i class="fas fa-bolt"></i></span>
+            OsamaAlshuLanPrompt
+        </a>
+    </header>
+
+    <main class="container" id="home-page">
+
+        <section class="hero-section">
+            <div class="hero-icon"><i class="fas fa-bolt"></i></div>
+            <h1 class="hero-title">انسخ والصق برومبت Gemini</h1>
+            <p class="hero-subtitle">اكتشف أحدث برومبتات تعديل صور Gemini من OSAMA ALSHULAN</p>
+
+            <form class="search-form" id="search-form">
+                <input type="text" class="search-input" id="search-input" placeholder="أدخل رقم البرومبت (1 - 200)" aria-label="رقم البرومبت">
+                <button type="submit" class="search-button">بحث</button>
+            </form>
+        </section>
+        
+        <hr style="border-top: 1px solid #333; margin: 30px 0;">
+
+        <section class="trending-prompts" id="trending-prompts-section">
+            <h2 class="section-title">برومبتات شائعة</h2>
+            <p class="hero-subtitle" style="margin-bottom: 25px;">اكتشف أكثر برومبتات الذكاء الاصطناعي شعبية من صانعي محتوى OSAMA ALSHULAN</p>
+            
+            <div id="prompts-list">
+            </div>
+
+            <div class="loading-spinner" id="loading-spinner"></div>
+
+
+            <div class="pagination-controls">
+                <a href="#" class="pagination-btn prev-btn" id="prev-page-button" onclick="changePage(-1)">
+                    السابق 
+                    <i class="fas fa-arrow-up"></i>
+                </a>
+                
+                <a href="#" class="pagination-btn next-btn" id="next-page-button" onclick="changePage(1)">
+                    التالي 
+                    <i class="fas fa-arrow-down"></i>
+                </a>
+            </div>
+
+        </section>
+    </main>
+
+    <main class="container details-page" id="details-page">
+        <a href="#" class="back-link" onclick="showPage('home')">
+            <i class="fas fa-arrow-left"></i> العودة إلى البرومبتات
+        </a>
+
+        <div class="prompt-card prompt-card-details">
+            <img src="https://via.placeholder.com/600x800/2c2c3e/FFFFFF?text=Prompt+Image+Details" alt="صورة البرومبت بالتفصيل" class="prompt-image" id="details-image">
+        </div>
+
+        <div class="prompt-area">
+            <div class="prompt-header">
+                <div class="ai-prompt-tag">
+                    <i class="fas fa-bolt"></i> برومبت الذكاء الاصطناعي
+                </div>
+                <button class="copy-button" onclick="copyPrompt()">
+                    <i class="far fa-copy"></i> انسخ البرومبت
+                </button>
+            </div>
+            
+            <div class="prompt-text" id="prompt-content">
+                A cinematic overhead shot of me standing on a zebra crossing, spotting a neck tattoo, a baggy jean, a crop top and kick sneakers, accessories and gold waist chains included and multiple ear piercings and nose piercings.make it clean.Ratio 3:4
+            </div>
+        </div>
+
+        <a href="#" onclick="openGeminiApp(event)" class="try-on-btn">
+            جرّب على Gemini
+            <span class="gemini-logo"></span>
+        </a>
+
+        <section class="how-to-use-section">
+            <h3><i class="fas fa-book-open"></i> كيفية استخدام هذا البرومبت</h3>
+            <p>1. انسخ البرومبت بالضغط على زر "انسخ البرومبت".</p>
+            <p>2. اذهب إلى **Gemini** وقم بلصق البرومبت.</p>
+            <p>3. تأكد من أن لديك ميزة توليد الصور مفعلة.</p>
+            <p>4. قم بتوليد صورتك واستمتع!</p>
+        </section>
+
+    </main>
+
+    <script>
+        const ALL_PROMPTS = {};
+        const PROMPTS_PER_PAGE = 6; 
+        let activeCard = null; 
+
+        // =======================================================
+        // بيانات البرومبتات الحقيقية والمحدثة 
+        // =======================================================
+        
+        // برومبت #1
+        ALL_PROMPTS[1] = {
+            text: `From the photo provided, use 100% of its face on top of the loaded image, your face should be exactly like the original selfie - without editing, retouching or softening. Maintain all facial features, skin texture and expressions. The same person sits in a modern executive chair with cream leather, placed behind a glass desk with chrome edges. The subject wears a dark navy suit with a golden tie, and looks at the side with a serious and confident expression. The Yemeni flag in red, white and black only does not contain any star displayed with pride. The scene is illuminated with soft cinematic lighting to highlight the details of his face, the shiny reflections of the glass office, me, and the texture of the suit. A foggy laptop and a cup of coffee are placed in the front to add realism and the image is 8k`,
+            image: `https://i.postimg.cc/7YKsnkx3/prompt-osamaalshulan-1.jpg`
+        };
+
+        // برومبت #2
+        ALL_PROMPTS[2] = {
+            text: `"A close-up photo of the same person attached to the photo used 100% of his face. Your face should be just like the original selfie - without editing, revising or smootening. Maintaining all facial features, skin texture and expressions, the viewer is viewed directly with a neutral expression to slightly reflective. He is wearing a formal black suit jacket, a fragile white shirt, and a tie with an intricate geometric pattern, colored in gold, blue and red shades. On the lap of the left jacket, there is a brooch or pin decorated with a central dark stone surrounded by metallic motifs, from which a delicate chain hangs. The background is a solid dark, probably black or very dark gray, creating a strong contrast that makes the subject stand out. The lighting is smooth and equal, highlighting its features without harsh shadows.”`,
+            image: `https://i.postimg.cc/TPJWnR6Z/prompt-osamaalshulan-2.jpg`
+        };
+
+
+        // إضافة 198 برومبتًا وهميًا آخر لملء الصفحات
+        for (let i = 3; i <= 200; i++) {
+            ALL_PROMPTS[i] = {
+                text: `برومبت رقم ${i}: صورة لـ (Model of the moment) بأسلوب فن البكسل، مع إضاءة نيون خلفية وتأثير ضبابي خفيف. تفاصيل عالية.`,
+                image: `https://via.placeholder.com/600x800/1e1e2d/e91e63?text=Prompt+%23${i}`
+            };
+        }
+        // =======================================================
+        
+        const totalPrompts = Object.keys(ALL_PROMPTS).length;
+        const totalPages = Math.ceil(totalPrompts / PROMPTS_PER_PAGE);
+
+        let currentPage = 1;
+
+        const home = document.getElementById('home-page');
+        const details = document.getElementById('details-page');
+        const promptContent = document.getElementById('prompt-content');
+        const detailsImage = document.getElementById('details-image');
+        const promptsList = document.getElementById('prompts-list');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const prevPageButton = document.getElementById('prev-page-button');
+        const nextPageButton = document.getElementById('next-page-button');
+        const searchForm = document.getElementById('search-form'); 
+        const searchInput = document.getElementById('search-input'); 
+        const appBody = document.getElementById('app-body');
+        
+        function createPromptCard(number) {
+            const data = ALL_PROMPTS[number];
+            if (!data) return '';
+            
+            return `
+                <div class="prompt-card" data-prompt-id="${number}">
+                    <span class="prompt-number">#${number}</span>
+                    <img src="${data.image}" alt="صورة البرومبت ${number}" class="prompt-image">
+                    
+                    <a href="#" class="view-prompt-btn" onclick="event.stopPropagation(); showDetails(${number});">
+                        <i class="fas fa-eye"></i> عرض البرومبت
+                    </a>
+                </div>
+            `;
+        }
+        
+        function toggleCardActivity(cardElement) {
+            if (activeCard && activeCard !== cardElement) {
+                activeCard.classList.remove('active');
+            }
+            
+            const isActive = cardElement.classList.contains('active');
+            
+            if (isActive) {
+                // النقر الثاني: الانتقال للتفاصيل
+                showDetails(parseInt(cardElement.dataset.promptId));
+            } else {
+                // النقر الأول: التنشيط لإظهار الزر
+                cardElement.classList.add('active');
+            }
+            
+            activeCard = cardElement.classList.contains('active') ? cardElement : null;
+        }
+
+        // إلغاء تنشيط البطاقة النشطة عند النقر خارجها
+        appBody.addEventListener('click', function(event) {
+            if (activeCard && !event.target.closest('.prompt-card') && !event.target.closest('.header')) {
+                activeCard.classList.remove('active');
+                activeCard = null;
+            }
+        });
+
+
+        function renderPrompts(pageNumber) {
+            if (pageNumber < 1 || pageNumber > totalPages) return;
+
+            currentPage = pageNumber;
+
+            const startIndex = (currentPage - 1) * PROMPTS_PER_PAGE + 1;
+            const endIndex = Math.min(startIndex + PROMPTS_PER_PAGE - 1, totalPrompts);
+
+            promptsList.innerHTML = ''; 
+            prevPageButton.style.display = 'none';
+            nextPageButton.style.display = 'none';
+            loadingSpinner.style.display = 'block';
+            
+            if (activeCard) {
+                activeCard.classList.remove('active');
+                activeCard = null;
+            }
+            
+            window.scrollTo(0, 0); 
+
+            setTimeout(() => {
+                let htmlContent = '';
+                for (let i = startIndex; i <= endIndex; i++) {
+                    // تأكدنا من أن البرومبت موجود قبل إنشائه
+                    if (ALL_PROMPTS[i]) {
+                         htmlContent += createPromptCard(i);
+                    }
+                }
+
+                promptsList.innerHTML = htmlContent;
+                loadingSpinner.style.display = 'none';
+                
+                // إضافة معالج الحدث لكل بطاقة جديدة
+                document.querySelectorAll('.prompt-card').forEach(card => {
+                    card.addEventListener('click', function(event) {
+                         if (!event.target.closest('.prompt-number')) {
+                            toggleCardActivity(this);
+                        }
+                    });
+                });
+
+                updatePaginationControls();
+                
+            }, 300); 
+        }
+
+        function updatePaginationControls() {
+            if (currentPage > 1) {
+                prevPageButton.style.display = 'flex';
+                prevPageButton.innerHTML = `السابق (${currentPage - 1}/${totalPages}) <i class="fas fa-arrow-up"></i>`;
+            } else {
+                prevPageButton.style.display = 'none';
+            }
+
+            if (currentPage < totalPages) {
+                nextPageButton.style.display = 'flex';
+                nextPageButton.innerHTML = `التالي (${currentPage + 1}/${totalPages}) <i class="fas fa-arrow-down"></i>`;
+            } else {
+                nextPageButton.style.display = 'none';
+            }
+        }
+        
+        function changePage(direction) {
+            const newPage = currentPage + direction;
+            if (newPage >= 1 && newPage <= totalPages) {
+                renderPrompts(newPage);
+            }
+        }
+
+        function handleSearch(event) {
+            event.preventDefault(); 
+            
+            const value = searchInput.value.trim();
+            const promptNumber = parseInt(value, 10); 
+            
+            if (isNaN(promptNumber) || promptNumber < 1 || promptNumber > totalPrompts) {
+                alert(`الرجاء إدخال رقم برومبت صحيح بين 1 و ${totalPrompts}.`);
+                return;
+            }
+
+            if (activeCard) {
+                activeCard.classList.remove('active');
+                activeCard = null;
+            }
+
+            showDetails(promptNumber);
+            searchInput.value = '';
+        }
+
+        async function copyPrompt() {
+            const copyButton = document.querySelector('.copy-button');
+            const originalText = copyButton.innerHTML;
+            const promptText = promptContent.textContent.trim();
+            
+            try {
+                await navigator.clipboard.writeText(promptText);
+                copyButton.innerHTML = '<i class="fas fa-check"></i> تم النسخ!';
+                copyButton.style.backgroundColor = 'var(--gemini-green)';
+                copyButton.style.backgroundImage = 'none';
+                
+                setTimeout(() => {
+                    copyButton.innerHTML = originalText;
+                    copyButton.style.backgroundColor = '';
+                    copyButton.style.backgroundImage = 'linear-gradient(90deg, var(--pink-accent), var(--purple-accent))';
+                }, 1500);
+                return true; 
+            } catch (err) {
+                alert('فشل في نسخ النص. قد تحتاج إلى الضغط على "انسخ البرومبت" أولاً.');
+                return false; 
+            }
+        }
+        
+        async function openGeminiApp(event) {
+            event.preventDefault(); 
+            
+            const copied = await copyPrompt();
+
+            if (!copied) {
+                return;
+            }
+
+            const webLink = 'https://gemini.google.com/app'; 
+            window.location.href = webLink; 
+        }
+
+        function showPage(pageId) {
+            if (pageId === 'home') {
+                home.style.display = 'block';
+                details.style.display = 'none';
+                document.title = 'OsamaAlshuLanPrompt - محاكاة التصفح';
+            } else if (pageId === 'details') {
+                home.style.display = 'none';
+                details.style.display = 'block';
+                window.scrollTo(0, 0);
+            }
+        }
+        
+        function showDetails(promptNumber) {
+            const data = ALL_PROMPTS[promptNumber];
+            
+            if (data) {
+                promptContent.textContent = data.text;
+                detailsImage.src = data.image; // استخدام الرابط الحقيقي مباشرة
+                document.title = `#${promptNumber} - OsamaAlshuLanPrompt`;
+                showPage('details');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPrompts(1); 
+            showPage('home');
+            searchForm.addEventListener('submit', handleSearch);
+        });
+    </script>
+</body>
+</html>
